@@ -1,0 +1,20 @@
+[package]
+name = "tracing-ext"
+version = "0.1.0"
+edition = "2021"
+description = ""
+license = "Apache 2.0"
+repository = "https://github.com/nlargueze/tracing-ext.git "
+
+[features]
+default = ["subscriber"]
+subscriber = ["dep:tracing-subscriber"]
+
+[dependencies]
+colored = "2.0.0"
+time = { version = "0.3.21", features = ["formatting", "macros"] }
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", optional = true }
+
+[dev-dependencies]
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
