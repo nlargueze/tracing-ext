@@ -2,7 +2,7 @@
 name = "tracing-ext"
 version = "0.2.0"
 edition = "2021"
-description = "Misc. racing utilities"
+description = "Misc. tracing utilities"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/nlargueze/tracing-ext"
 
