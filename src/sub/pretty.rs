@@ -14,6 +14,17 @@ const TIME_FORMAT_DEFAULT: &[time::format_description::FormatItem<'static>] =
     format_description!("[hour]:[minute]:[second].[subsecond digits:6]");
 
 /// A tracing layer with pretty print to the console
+///
+/// ```
+///  let pretty_layer = PrettyConsoleLayer::default()
+///     .wrapped(true)
+///     .oneline(false)
+///     .events_only(true)
+///     .show_time(true)
+///     .show_target(true)
+///     .show_span_info(true)
+///     .indent(6);
+/// ```
 #[derive(Debug, Default)]
 pub struct PrettyConsoleLayer {
     /// Format
