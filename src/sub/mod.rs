@@ -6,15 +6,17 @@ use std::{collections::HashMap, time::Instant};
 
 use tracing_subscriber::registry::SpanRef;
 
-pub mod pretty;
+mod pretty;
+
+pub use pretty::*;
 
 #[cfg(test)]
-pub mod tests;
+mod tests;
 
 /// Trait for a span extension
 pub trait SpanExtension {
-    /// Initializes the extension
-    fn init<S>(span_ref: &SpanRef<S>)
+    /// Registers an extension with default values
+    fn register_default<S>(span_ref: &SpanRef<S>)
     where
         S: tracing::Subscriber + for<'a> tracing_subscriber::registry::LookupSpan<'a>,
         Self: Default + Send + Sync + 'static,
@@ -23,6 +25,18 @@ pub trait SpanExtension {
         if extensions.get_mut::<Self>().is_none() {
             let ext = Self::default();
             extensions.insert(ext);
+        }
+    }
+
+    /// Registers an extension with initial value
+    fn register_value<S>(initial_value: Self, span_ref: &SpanRef<S>)
+    where
+        S: tracing::Subscriber + for<'a> tracing_subscriber::registry::LookupSpan<'a>,
+        Self: Send + Sync + Sized + 'static,
+    {
+        let mut extensions = span_ref.extensions_mut();
+        if extensions.get_mut::<Self>().is_none() {
+            extensions.insert(initial_value);
         }
     }
 

@@ -1,3 +1,3 @@
 # tracing-ext
 
-Extension crate for Rust tracing
+Extension for Rust `tracing` crate

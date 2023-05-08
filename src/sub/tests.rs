@@ -5,7 +5,7 @@ use std::sync::Once;
 use tracing::{debug, info, warn};
 use tracing_subscriber::{prelude::*, EnvFilter};
 
-use super::pretty::PrettyConsolelayer;
+use super::pretty::PrettyConsoleLayer;
 
 /// Keep track of tests initialization
 static INIT: Once = Once::new();
@@ -15,10 +15,13 @@ fn init() {
     INIT.call_once(|| {
         // let layer_fmt = fmt::layer().with_target(false);
         let layer_filter = EnvFilter::from_default_env();
-        let layer_console = PrettyConsolelayer::default()
-            .print_enter_exit(true)
+        let layer_console = PrettyConsoleLayer::default()
+            .wrapped(true)
+            .oneline(false)
+            .show_span(true)
             .show_time(true)
-            .show_target(true);
+            .show_target(true)
+            .indent(6);
 
         tracing_subscriber::registry()
             // .with(layer_fmt)
