@@ -30,11 +30,13 @@ struct PrettyFormatOptions {
     /// Time format
     pub time_format: &'static [time::format_description::FormatItem<'static>],
     /// The span is shown (enter and exit info)
-    pub show_span: bool,
+    pub events_only: bool,
     /// The timestanp is shown
     pub show_time: bool,
     /// The target is shown
     pub show_target: bool,
+    /// Shows the span info
+    pub show_span_info: bool,
     /// Indentation (x spaces) - invalid if the `oneline` option is set
     pub indent: usize,
 }
@@ -45,9 +47,10 @@ impl Default for PrettyFormatOptions {
             wrapped: false,
             oneline: false,
             time_format: TIME_FORMAT_DEFAULT,
-            show_span: true,
+            events_only: false,
             show_time: true,
             show_target: true,
+            show_span_info: true,
             indent: 6,
         }
     }
@@ -75,9 +78,9 @@ impl PrettyConsoleLayer {
         self
     }
 
-    /// Sets if the span is shown (enter and exit info)
-    pub fn show_span(mut self, show: bool) -> Self {
-        self.format.show_span = show;
+    /// Sets if only the events are shown
+    pub fn events_only(mut self, show: bool) -> Self {
+        self.format.events_only = show;
         self
     }
 
@@ -90,6 +93,12 @@ impl PrettyConsoleLayer {
     /// Sets if the target is shown
     pub fn show_target(mut self, show: bool) -> Self {
         self.format.show_target = show;
+        self
+    }
+
+    /// Sets if the span inline info is shown
+    pub fn show_span_info(mut self, show: bool) -> Self {
+        self.format.show_span_info = show;
         self
     }
 
@@ -149,6 +158,7 @@ impl SpanExtRecord {
         } else {
             0
         };
+
         Self {
             tree_level,
             id: span_ref.id().into_u64(),
@@ -165,7 +175,7 @@ impl SpanExtRecord {
 
     /// Serializes the span entry
     fn serialize_span_entry(&self, opts: &PrettyFormatOptions) -> Vec<u8> {
-        if !opts.show_span {
+        if opts.events_only {
             return vec![];
         }
 
@@ -180,9 +190,7 @@ impl SpanExtRecord {
         write!(buf, "{}", tree_indent_str).unwrap();
 
         if !opts.wrapped {
-            write!(buf, "{:w$}", format!("-> {}", self.id), w = opts.indent).unwrap();
-        } else {
-            write!(buf, "<{}> ", self.id).unwrap();
+            write!(buf, "{:w$}", format!("-->"), w = opts.indent).unwrap();
         }
         write!(buf, "{}", self.name.magenta()).unwrap();
 
@@ -207,6 +215,13 @@ impl SpanExtRecord {
             write!(buf, "{}", target.dimmed()).unwrap();
         }
 
+        // span info
+        if opts.show_span_info {
+            write!(buf, "{field_new_line}").unwrap();
+            let span_id = format!("{}: {}", "span.id".italic(), self.id);
+            write!(buf, "{}", span_id.dimmed()).unwrap();
+        }
+
         // span attributes
         for (k, v) in &self.attrs {
             write!(buf, "{field_new_line}").unwrap();
@@ -218,14 +233,14 @@ impl SpanExtRecord {
 
     /// Serializes the span exit
     fn serialize_span_exit(&self, opts: &PrettyFormatOptions) -> Vec<u8> {
-        if !opts.show_span {
+        if opts.events_only {
             return vec![];
         }
 
         let mut buf: Vec<u8> = vec![];
 
         let tree_indent = if opts.wrapped {
-            self.tree_level * opts.indent * opts.indent
+            self.tree_level * opts.indent
         } else {
             0
         };
@@ -233,9 +248,7 @@ impl SpanExtRecord {
         write!(buf, "{}", tree_indent_str).unwrap();
 
         if !opts.wrapped {
-            write!(buf, "{:w$}", format!("<- {}", self.id), w = opts.indent).unwrap();
-        } else {
-            write!(buf, "<{}> ", self.id).unwrap();
+            write!(buf, "{:w$}", format!("<--"), w = opts.indent).unwrap();
         }
         write!(buf, "{}", self.name.magenta()).unwrap();
 
@@ -248,6 +261,22 @@ impl SpanExtRecord {
 
         let duration_us = self.entered.elapsed().as_micros();
         write!(buf, " {}", format!("{duration_us}us").dimmed()).unwrap();
+
+        // new line
+        let field_indent = tree_indent + opts.indent;
+        let field_indent_str = " ".repeat(field_indent);
+        let field_new_line = if opts.oneline {
+            " ".to_string()
+        } else {
+            format!("\n{field_indent_str}")
+        };
+
+        // span info
+        if opts.show_span_info {
+            write!(buf, "{field_new_line}").unwrap();
+            let span_id = format!("{}: {}", "span.id".italic(), self.id);
+            write!(buf, "{}", span_id.dimmed()).unwrap();
+        }
 
         buf
     }
@@ -312,18 +341,20 @@ impl EventRecord {
         }
 
         // event context
-        if let Some((_, id, name)) = &self.span {
-            write!(buf, "{field_new_line}").unwrap();
-            let span_id = format!("{}: {}", "span.id".italic(), id);
-            write!(buf, "{}", span_id.dimmed()).unwrap();
+        if opts.show_span_info {
+            if let Some((_, id, name)) = &self.span {
+                write!(buf, "{field_new_line}").unwrap();
+                let span_id = format!("{}: {}", "span.id".italic(), id);
+                write!(buf, "{}", span_id.dimmed()).unwrap();
 
-            write!(buf, "{field_new_line}").unwrap();
-            let span_name = format!(
-                "{} {}",
-                "span.name:".italic().dimmed(),
-                name.truecolor(191, 160, 217)
-            );
-            write!(buf, "{}", span_name.dimmed()).unwrap();
+                write!(buf, "{field_new_line}").unwrap();
+                let span_name = format!(
+                    "{} {}",
+                    "span.name:".italic().dimmed(),
+                    name.truecolor(191, 160, 217)
+                );
+                write!(buf, "{}", span_name.dimmed()).unwrap();
+            }
         }
 
         // event fields
@@ -435,7 +466,7 @@ where
                     .get_mut::<SpanExtRecord>()
                     .expect("Extension not initialized");
                 (
-                    span_record.tree_level,
+                    span_record.tree_level + 1,
                     id.into_u64(),
                     ctx.current_span().metadata().unwrap().name().to_string(),
                 )

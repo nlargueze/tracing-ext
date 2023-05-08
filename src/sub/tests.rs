@@ -18,9 +18,10 @@ fn init() {
         let layer_console = PrettyConsoleLayer::default()
             .wrapped(true)
             .oneline(false)
-            .show_span(true)
+            .events_only(true)
             .show_time(true)
             .show_target(true)
+            .show_span_info(true)
             .indent(6);
 
         tracing_subscriber::registry()
