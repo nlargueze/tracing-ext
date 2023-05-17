@@ -261,24 +261,14 @@ impl SpanExtRecord {
         }
         write!(buf, "{}", self.name.magenta()).unwrap();
 
-        let duration_us = self.entered.elapsed().as_micros();
-        write!(buf, " {}", format!("{duration_us}us").dimmed()).unwrap();
-
-        // new line
-        let field_indent = tree_indent + opts.indent;
-        let field_indent_str = " ".repeat(field_indent);
-        let field_new_line = if opts.oneline {
-            " ".to_string()
-        } else {
-            format!("\n{field_indent_str}")
-        };
-
         // span info
         if opts.show_span_info {
-            write!(buf, "{field_new_line}").unwrap();
-            let span_id = format!("{}: {}", "span.id".italic(), self.id);
-            write!(buf, "{}", span_id.dimmed()).unwrap();
+            let span_id = format!("({}={})", "id".italic(), self.id);
+            write!(buf, " {}", span_id.dimmed()).unwrap();
         }
+
+        let duration_us = self.entered.elapsed().as_micros();
+        write!(buf, " {}", format!("{duration_us}us").dimmed()).unwrap();
 
         buf
     }
