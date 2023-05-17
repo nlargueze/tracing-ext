@@ -221,15 +221,15 @@ impl SpanExtRecord {
             write!(buf, "{field_new_line}{}", line.dimmed()).unwrap();
         };
 
-        if opts.show_target {
-            let target = format!("{} ({}:{})", self.target, self.file, self.line);
-            write!(buf, "{field_new_line}{}", target.dimmed()).unwrap();
-        }
-
         // span info
         if opts.show_span_info {
             let span_id = format!("{}: {}", "span.id".italic(), self.id);
             write!(buf, "{field_new_line}{}", span_id.dimmed()).unwrap();
+        }
+
+        if opts.show_target {
+            let target = format!("{} ({}:{})", self.target, self.file, self.line);
+            write!(buf, "{field_new_line}{}", target.dimmed()).unwrap();
         }
 
         // span attributes
@@ -327,11 +327,6 @@ impl EventRecord {
             write!(buf, "{field_new_line}{}", line.dimmed()).unwrap();
         };
 
-        if opts.show_target {
-            let target = format!("{} ({}:{})", self.target, self.file, self.line);
-            write!(buf, "{field_new_line}{}", target.dimmed()).unwrap();
-        }
-
         // event context
         if opts.show_span_info {
             if let Some((_, id, name)) = &self.span {
@@ -345,6 +340,11 @@ impl EventRecord {
                 );
                 write!(buf, "{}", span_name.dimmed()).unwrap();
             }
+        }
+
+        if opts.show_target {
+            let target = format!("{} ({}:{})", self.target, self.file, self.line);
+            write!(buf, "{field_new_line}{}", target.dimmed()).unwrap();
         }
 
         // event fields
