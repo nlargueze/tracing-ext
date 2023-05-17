@@ -15,7 +15,9 @@ const TIME_FORMAT_DEFAULT: &[time::format_description::FormatItem<'static>] =
 
 /// A tracing layer with pretty print to the console
 ///
-/// ```ignore
+/// ```
+///  use tracing_ext::sub::PrettyConsoleLayer;
+///
 ///  let pretty_layer = PrettyConsoleLayer::default()
 ///     .wrapped(true)
 ///     .oneline(false)
