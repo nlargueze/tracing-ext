@@ -18,6 +18,7 @@ async fn init() {
             .events_only(true)
             .show_time(false)
             .show_target(false)
+            .show_file_info(false)
             .show_span_info(false)
             .indent(6);
 

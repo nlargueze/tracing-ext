@@ -22,6 +22,7 @@ const TIME_FORMAT_DEFAULT: &[time::format_description::FormatItem<'static>] =
 ///     .events_only(true)
 ///     .show_time(true)
 ///     .show_target(true)
+///     .show_file_info(true)
 ///     .show_span_info(true)
 ///     .indent(6);
 /// ```
@@ -46,6 +47,8 @@ struct PrettyFormatOptions {
     pub show_time: bool,
     /// The target is shown
     pub show_target: bool,
+    /// The file info is shown
+    pub show_file_info: bool,
     /// Shows the span info
     pub show_span_info: bool,
     /// Indentation (x spaces) - invalid if the `oneline` option is set
@@ -61,6 +64,7 @@ impl Default for PrettyFormatOptions {
             events_only: false,
             show_time: true,
             show_target: true,
+            show_file_info: true,
             show_span_info: true,
             indent: 6,
         }
@@ -104,6 +108,12 @@ impl PrettyConsoleLayer {
     /// Sets if the target is shown
     pub fn show_target(mut self, show: bool) -> Self {
         self.format.show_target = show;
+        self
+    }
+
+    /// Sets if the file info is shown
+    pub fn show_file_info(mut self, show: bool) -> Self {
+        self.format.show_file_info = show;
         self
     }
 
@@ -217,7 +227,7 @@ impl SpanExtRecord {
             let time_str = time::OffsetDateTime::now_utc()
                 .format(opts.time_format)
                 .expect("invalid datetime");
-            let line = format!("time: {time_str}");
+            let line = format!("{}: {}", "time".italic(), time_str);
             write!(buf, "{field_new_line}{}", line.dimmed()).unwrap();
         };
 
@@ -228,13 +238,18 @@ impl SpanExtRecord {
         }
 
         if opts.show_target {
-            let target = format!("{} ({}:{})", self.target, self.file, self.line);
+            let target = format!("{}: {}", "target".italic(), self.target);
+            write!(buf, "{field_new_line}{}", target.dimmed()).unwrap();
+        }
+
+        if opts.show_file_info {
+            let target = format!("{}: {}:{}", "file".italic(), self.file, self.line);
             write!(buf, "{field_new_line}{}", target.dimmed()).unwrap();
         }
 
         // span attributes
         for (k, v) in &self.attrs {
-            write!(buf, "{field_new_line}{} {}", format!("{k}:").italic(), v).unwrap();
+            write!(buf, "{field_new_line}{}={}", k.to_string().italic(), v).unwrap();
         }
 
         buf
@@ -323,7 +338,7 @@ impl EventRecord {
             let time_str = time::OffsetDateTime::now_utc()
                 .format(opts.time_format)
                 .expect("invalid datetime");
-            let line = format!("time: {time_str}");
+            let line = format!("{}: {}", "time".italic(), time_str);
             write!(buf, "{field_new_line}{}", line.dimmed()).unwrap();
         };
 
@@ -334,8 +349,9 @@ impl EventRecord {
                 write!(buf, "{field_new_line}{}", span_id.dimmed()).unwrap();
 
                 let span_name = format!(
-                    "{field_new_line}{} {}",
-                    "span.name:".italic().dimmed(),
+                    "{field_new_line}{}{} {}",
+                    "span.name".italic().dimmed(),
+                    ":".dimmed(),
                     name.truecolor(191, 160, 217)
                 );
                 write!(buf, "{}", span_name.dimmed()).unwrap();
@@ -343,13 +359,18 @@ impl EventRecord {
         }
 
         if opts.show_target {
-            let target = format!("{} ({}:{})", self.target, self.file, self.line);
+            let target = format!("{}: {}", "target".italic(), self.target);
+            write!(buf, "{field_new_line}{}", target.dimmed()).unwrap();
+        }
+
+        if opts.show_file_info {
+            let target = format!("{}: {}:{}", "file".italic(), self.file, self.line);
             write!(buf, "{field_new_line}{}", target.dimmed()).unwrap();
         }
 
         // event fields
         for (k, v) in &self.meta_fields {
-            write!(buf, "{field_new_line}{} {}", format!("{k}:").italic(), v).unwrap();
+            write!(buf, "{field_new_line}{}={}", k.to_string().italic(), v).unwrap();
         }
 
         buf

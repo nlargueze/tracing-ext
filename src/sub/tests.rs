@@ -16,11 +16,12 @@ fn init() {
         // let layer_fmt = fmt::layer().with_target(false);
         let layer_filter = EnvFilter::from_default_env();
         let layer_console = PrettyConsoleLayer::default()
-            .wrapped(true)
+            .wrapped(false)
             .oneline(false)
             .events_only(false)
             .show_time(true)
             .show_target(true)
+            .show_file_info(true)
             .show_span_info(true)
             .indent(6);
 
