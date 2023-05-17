@@ -205,13 +205,6 @@ impl SpanExtRecord {
         }
         write!(buf, "{}", self.name.magenta()).unwrap();
 
-        if opts.show_time {
-            let time_str = time::OffsetDateTime::now_utc()
-                .format(opts.time_format)
-                .expect("invalid datetime");
-            write!(buf, " {}", time_str.dimmed()).unwrap();
-        };
-
         let field_indent = tree_indent + opts.indent;
         let field_indent_str = " ".repeat(field_indent);
         let field_new_line = if opts.oneline {
@@ -220,23 +213,28 @@ impl SpanExtRecord {
             format!("\n{field_indent_str}")
         };
 
+        if opts.show_time {
+            let time_str = time::OffsetDateTime::now_utc()
+                .format(opts.time_format)
+                .expect("invalid datetime");
+            let line = format!("time: {time_str}");
+            write!(buf, "{field_new_line}{}", line.dimmed()).unwrap();
+        };
+
         if opts.show_target {
-            write!(buf, "{field_new_line}").unwrap();
             let target = format!("{} ({}:{})", self.target, self.file, self.line);
-            write!(buf, "{}", target.dimmed()).unwrap();
+            write!(buf, "{field_new_line}{}", target.dimmed()).unwrap();
         }
 
         // span info
         if opts.show_span_info {
-            write!(buf, "{field_new_line}").unwrap();
             let span_id = format!("{}: {}", "span.id".italic(), self.id);
-            write!(buf, "{}", span_id.dimmed()).unwrap();
+            write!(buf, "{field_new_line}{}", span_id.dimmed()).unwrap();
         }
 
         // span attributes
         for (k, v) in &self.attrs {
-            write!(buf, "{field_new_line}").unwrap();
-            write!(buf, "{} {}", format!("{k}:").italic(), v).unwrap();
+            write!(buf, "{field_new_line}{} {}", format!("{k}:").italic(), v).unwrap();
         }
 
         buf
@@ -262,13 +260,6 @@ impl SpanExtRecord {
             write!(buf, "{:w$}", format!("<--"), w = opts.indent).unwrap();
         }
         write!(buf, "{}", self.name.magenta()).unwrap();
-
-        if opts.show_time {
-            let time_str = time::OffsetDateTime::now_utc()
-                .format(opts.time_format)
-                .expect("invalid datetime");
-            write!(buf, " {}", time_str.dimmed()).unwrap();
-        };
 
         let duration_us = self.entered.elapsed().as_micros();
         write!(buf, " {}", format!("{duration_us}us").dimmed()).unwrap();
@@ -330,13 +321,6 @@ impl EventRecord {
         write!(buf, "{}", level_str).unwrap();
         write!(buf, "{}", self.message).unwrap();
 
-        if opts.show_time {
-            let time_str = time::OffsetDateTime::now_utc()
-                .format(opts.time_format)
-                .expect("invalid datetime");
-            write!(buf, " {}", time_str.dimmed()).unwrap();
-        };
-
         let field_indent = tree_indent + opts.indent;
         let field_indent_str = " ".repeat(field_indent);
         let field_new_line = if opts.oneline {
@@ -345,22 +329,27 @@ impl EventRecord {
             format!("\n{field_indent_str}")
         };
 
+        if opts.show_time {
+            let time_str = time::OffsetDateTime::now_utc()
+                .format(opts.time_format)
+                .expect("invalid datetime");
+            let line = format!("time: {time_str}");
+            write!(buf, "{field_new_line}{}", line.dimmed()).unwrap();
+        };
+
         if opts.show_target {
-            write!(buf, "{field_new_line}").unwrap();
             let target = format!("{} ({}:{})", self.target, self.file, self.line);
-            write!(buf, "{}", target.dimmed()).unwrap();
+            write!(buf, "{field_new_line}{}", target.dimmed()).unwrap();
         }
 
         // event context
         if opts.show_span_info {
             if let Some((_, id, name)) = &self.span {
-                write!(buf, "{field_new_line}").unwrap();
                 let span_id = format!("{}: {}", "span.id".italic(), id);
-                write!(buf, "{}", span_id.dimmed()).unwrap();
+                write!(buf, "{field_new_line}{}", span_id.dimmed()).unwrap();
 
-                write!(buf, "{field_new_line}").unwrap();
                 let span_name = format!(
-                    "{} {}",
+                    "{field_new_line}{} {}",
                     "span.name:".italic().dimmed(),
                     name.truecolor(191, 160, 217)
                 );
@@ -370,8 +359,7 @@ impl EventRecord {
 
         // event fields
         for (k, v) in &self.meta_fields {
-            write!(buf, "{field_new_line}").unwrap();
-            write!(buf, "{} {}", format!("{k}:").italic(), v).unwrap();
+            write!(buf, "{field_new_line}{} {}", format!("{k}:").italic(), v).unwrap();
         }
 
         buf

@@ -18,7 +18,7 @@ fn init() {
         let layer_console = PrettyConsoleLayer::default()
             .wrapped(true)
             .oneline(false)
-            .events_only(true)
+            .events_only(false)
             .show_time(true)
             .show_target(true)
             .show_span_info(true)
