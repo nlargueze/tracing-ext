@@ -203,7 +203,7 @@ impl SpanExtRecord {
         if !opts.wrapped {
             write!(buf, "{:w$}", format!("-->"), w = opts.indent).unwrap();
         }
-        write!(buf, "{}", self.name.magenta()).unwrap();
+        write!(buf, "{}", format!("{{{}}}", self.name).magenta()).unwrap();
 
         let field_indent = tree_indent + opts.indent;
         let field_indent_str = " ".repeat(field_indent);
@@ -259,7 +259,7 @@ impl SpanExtRecord {
         if !opts.wrapped {
             write!(buf, "{:w$}", format!("<--"), w = opts.indent).unwrap();
         }
-        write!(buf, "{}", self.name.magenta()).unwrap();
+        write!(buf, "{}", format!("!{{{}}}", self.name).magenta()).unwrap();
 
         // span info
         if opts.show_span_info {
